@@ -71,7 +71,7 @@ class BboxLoss(nn.Module):
         pred_bboxes_pos = torch.masked_select(pred_bboxes, bbox_mask).view(-1, 4)
         target_bboxes_pos = torch.masked_select(target_bboxes, bbox_mask).view(-1, 4)
         bbox_weight = torch.masked_select(target_scores.sum(-1), fg_mask).unsqueeze(-1)
-        
+
         iou = bbox_iou(pred_bboxes_pos, target_bboxes_pos, xywh=False, CIoU=True)
         loss_iou = 1.0 - iou
 
@@ -171,12 +171,12 @@ class ComputeLoss:
         loss = torch.zeros(3, device=self.device)  # box, cls, dfl
         feats = p[1][0] if isinstance(p, tuple) else p[0]
         feats2 = p[1][1] if isinstance(p, tuple) else p[1]
-        
+
         pred_distri, pred_scores = torch.cat([xi.view(feats[0].shape[0], self.no, -1) for xi in feats], 2).split(
             (self.reg_max * 4, self.nc), 1)
         pred_scores = pred_scores.permute(0, 2, 1).contiguous()
         pred_distri = pred_distri.permute(0, 2, 1).contiguous()
-        
+
         pred_distri2, pred_scores2 = torch.cat([xi.view(feats2[0].shape[0], self.no, -1) for xi in feats2], 2).split(
             (self.reg_max * 4, self.nc), 1)
         pred_scores2 = pred_scores2.permute(0, 2, 1).contiguous()
@@ -250,6 +250,13 @@ class ComputeLoss:
 
         return loss.sum() * batch_size, loss.detach()  # loss(box, cls, dfl)
 
+    def to(self, device):
+        self.device = device
+        self.BCEcls = self.BCEcls.to(device)
+        self.proj = self.proj.to(device)
+        self.bbox_loss = self.bbox_loss.to(device)
+        self.bbox_loss2 = self.bbox_loss2.to(device)
+        return self
 
 class ComputeLossLH:
     # Compute losses
@@ -314,12 +321,12 @@ class ComputeLossLH:
         loss = torch.zeros(3, device=self.device)  # box, cls, dfl
         feats = p[1][0] if isinstance(p, tuple) else p[0]
         feats2 = p[1][1] if isinstance(p, tuple) else p[1]
-        
+
         pred_distri, pred_scores = torch.cat([xi.view(feats[0].shape[0], self.no, -1) for xi in feats], 2).split(
             (self.reg_max * 4, self.nc), 1)
         pred_scores = pred_scores.permute(0, 2, 1).contiguous()
         pred_distri = pred_distri.permute(0, 2, 1).contiguous()
-        
+
         pred_distri2, pred_scores2 = torch.cat([xi.view(feats2[0].shape[0], self.no, -1) for xi in feats2], 2).split(
             (self.reg_max * 4, self.nc), 1)
         pred_scores2 = pred_scores2.permute(0, 2, 1).contiguous()
