@@ -1,3 +1,14 @@
+# pyyolov9
+
+This is an unofficial package for yolov9. The original repository can be found [here](https://github.com/WongKinYiu/yolov9).
+
+## Installation
+```bash
+pip install pyyolov9
+```
+
+
+# Below is the original README.md from the repository
 # YOLOv9
 
 Implementation of paper - [YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information](https://arxiv.org/abs/2402.13616)
