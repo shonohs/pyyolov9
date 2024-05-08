@@ -71,7 +71,7 @@ class BboxLoss(nn.Module):
         pred_bboxes_pos = torch.masked_select(pred_bboxes, bbox_mask).view(-1, 4)
         target_bboxes_pos = torch.masked_select(target_bboxes, bbox_mask).view(-1, 4)
         bbox_weight = torch.masked_select(target_scores.sum(-1), fg_mask).unsqueeze(-1)
-        
+
         iou = bbox_iou(pred_bboxes_pos, target_bboxes_pos, xywh=False, CIoU=True)
         loss_iou = 1.0 - iou
 
@@ -213,3 +213,10 @@ class ComputeLoss:
         loss[2] *= 1.5  # dfl gain
 
         return loss.sum() * batch_size, loss.detach()  # loss(box, cls, dfl)
+
+    def to(self, device):
+        self.device = device
+        self.proj = self.proj.to(device)
+        self.bbox_loss = self.bbox_loss.to(device)
+        self.BCEcls = self.BCEcls.to(device)
+        return self
