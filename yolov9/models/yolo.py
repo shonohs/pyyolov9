@@ -15,7 +15,6 @@ if platform.system() != 'Windows':
 from models.common import *
 from models.experimental import *
 from utils.general import LOGGER, check_version, check_yaml, make_divisible, print_args
-from utils.plots import feature_visualization
 from utils.torch_utils import (fuse_conv_and_bn, initialize_weights, model_info, profile, scale_img, select_device,
                                time_sync)
 from utils.tal.anchor_generator import make_anchors, dist2bbox
@@ -356,17 +355,17 @@ class TripleDDetect(nn.Module):
         c6, c7 = make_divisible(max((ch[self.nl * 2] // 4, self.reg_max * 4, 16)), 4), \
                                 max((ch[self.nl * 2], min((self.nc * 2, 128))))  # channels
         self.cv2 = nn.ModuleList(
-            nn.Sequential(Conv(x, c2, 3), Conv(c2, c2, 3, g=4), 
+            nn.Sequential(Conv(x, c2, 3), Conv(c2, c2, 3, g=4),
                           nn.Conv2d(c2, 4 * self.reg_max, 1, groups=4)) for x in ch[:self.nl])
         self.cv3 = nn.ModuleList(
             nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3), nn.Conv2d(c3, self.nc, 1)) for x in ch[:self.nl])
         self.cv4 = nn.ModuleList(
-            nn.Sequential(Conv(x, c4, 3), Conv(c4, c4, 3, g=4), 
+            nn.Sequential(Conv(x, c4, 3), Conv(c4, c4, 3, g=4),
                           nn.Conv2d(c4, 4 * self.reg_max, 1, groups=4)) for x in ch[self.nl:self.nl*2])
         self.cv5 = nn.ModuleList(
             nn.Sequential(Conv(x, c5, 3), Conv(c5, c5, 3), nn.Conv2d(c5, self.nc, 1)) for x in ch[self.nl:self.nl*2])
         self.cv6 = nn.ModuleList(
-            nn.Sequential(Conv(x, c6, 3), Conv(c6, c6, 3, g=4), 
+            nn.Sequential(Conv(x, c6, 3), Conv(c6, c6, 3, g=4),
                           nn.Conv2d(c6, 4 * self.reg_max, 1, groups=4)) for x in ch[self.nl*2:self.nl*3])
         self.cv7 = nn.ModuleList(
             nn.Sequential(Conv(x, c7, 3), Conv(c7, c7, 3), nn.Conv2d(c7, self.nc, 1)) for x in ch[self.nl*2:self.nl*3])
@@ -516,7 +515,7 @@ class Panoptic(Detect):
         if self.training:
             return x, mc, p, s
         return (torch.cat([x, mc], 1), p, s) if self.export else (torch.cat([x[0], mc], 1), (x[1], mc, p, s))
-    
+
 
 class BaseModel(nn.Module):
     # YOLO base model
@@ -533,6 +532,7 @@ class BaseModel(nn.Module):
             x = m(x)  # run
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
+                from utils.plots import feature_visualization
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
         return x
 
@@ -730,7 +730,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
 
         n = n_ = max(round(n * gd), 1) if n > 1 else n  # depth gain
         if m in {
-            Conv, AConv, ConvTranspose, 
+            Conv, AConv, ConvTranspose,
             Bottleneck, SPP, SPPF, DWConv, BottleneckCSP, nn.ConvTranspose2d, DWConvTranspose2d, SPPCSPC, ADown,
             RepNCSPELAN4, SPPELAN}:
             c1, c2 = ch[f], args[0]

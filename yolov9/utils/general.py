@@ -23,9 +23,7 @@ from typing import Optional
 from zipfile import ZipFile, is_zipfile
 
 import cv2
-import IPython
 import numpy as np
-import pandas as pd
 import pkg_resources as pkg
 import torch
 import torchvision
@@ -49,7 +47,7 @@ FONT = 'Arial.ttf'  # https://ultralytics.com/assets/Arial.ttf
 
 torch.set_printoptions(linewidth=320, precision=5, profile='long')
 np.set_printoptions(linewidth=320, formatter={'float_kind': '{:11.5g}'.format})  # format short g, %precision=5
-pd.options.display.max_columns = 10
+# pd.options.display.max_columns = 10
 cv2.setNumThreads(0)  # prevent OpenCV from multithreading (incompatible with PyTorch DataLoader)
 os.environ['NUMEXPR_MAX_THREADS'] = str(NUM_THREADS)  # NumExpr max threads
 os.environ['OMP_NUM_THREADS'] = '1' if platform.system() == 'darwin' else str(NUM_THREADS)  # OpenMP (PyTorch and SciPy)
@@ -73,6 +71,7 @@ def is_colab():
 
 def is_notebook():
     # Is environment a Jupyter notebook? Verified on Colab, Jupyterlab, Kaggle, Paperspace
+    import IPython
     ipython_type = str(type(IPython.get_ipython()))
     return 'colab' in ipython_type or 'zmqshell' in ipython_type
 
@@ -1030,6 +1029,7 @@ def print_mutation(keys, results, hyp, save_dir, bucket, prefix=colorstr('evolve
         f.write(s + ('%20.5g,' * n % vals).rstrip(',') + '\n')
 
     # Save yaml
+    import pandas as pd
     with open(evolve_yaml, 'w') as f:
         data = pd.read_csv(evolve_csv)
         data = data.rename(columns=lambda x: x.strip())  # strip keys

@@ -2,7 +2,6 @@ import math
 import warnings
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
@@ -184,6 +183,7 @@ class ConfusionMatrix:
     @TryExcept('WARNING ⚠️ ConfusionMatrix plot failure')
     def plot(self, normalize=True, save_dir='', names=()):
         import seaborn as sn
+        import matplotlib.pyplot as plt
 
         array = self.matrix / ((self.matrix.sum(0).reshape(1, -1) + 1E-9) if normalize else 1)  # normalize columns
         array[array < 0.005] = np.nan  # don't annotate (would appear as 0.00)
@@ -215,7 +215,7 @@ class ConfusionMatrix:
     def print(self):
         for i in range(self.nc + 1):
             print(' '.join(map(str, self.matrix[i])))
-            
+
 
 class WIoU_Scale:
     ''' monotonous: {
@@ -224,7 +224,7 @@ class WIoU_Scale:
             False: non-monotonic FM v3
         }
         momentum: The momentum of running mean'''
-    
+
     iou_mean = 1.
     monotonous = False
     _momentum = 1 - 0.5 ** (1 / 7000)
@@ -233,12 +233,12 @@ class WIoU_Scale:
     def __init__(self, iou):
         self.iou = iou
         self._update(self)
-    
+
     @classmethod
     def _update(cls, self):
         if cls._is_train: cls.iou_mean = (1 - cls._momentum) * cls.iou_mean + \
                                          cls._momentum * self.iou.detach().mean().item()
-    
+
     @classmethod
     def _scaled_loss(cls, self, gamma=1.9, delta=3):
         if isinstance(self.monotonous, bool):
@@ -354,6 +354,7 @@ def wh_iou(wh1, wh2, eps=1e-7):
 @threaded
 def plot_pr_curve(px, py, ap, save_dir=Path('pr_curve.png'), names=()):
     # Precision-recall curve
+    import matplotlib.pyplot as plt
     fig, ax = plt.subplots(1, 1, figsize=(9, 6), tight_layout=True)
     py = np.stack(py, axis=1)
 
@@ -377,6 +378,7 @@ def plot_pr_curve(px, py, ap, save_dir=Path('pr_curve.png'), names=()):
 @threaded
 def plot_mc_curve(px, py, save_dir=Path('mc_curve.png'), names=(), xlabel='Confidence', ylabel='Metric'):
     # Metric-confidence curve
+    import matplotlib.pyplot as plt
     fig, ax = plt.subplots(1, 1, figsize=(9, 6), tight_layout=True)
 
     if 0 < len(names) < 21:  # display per-class legend if < 21 classes

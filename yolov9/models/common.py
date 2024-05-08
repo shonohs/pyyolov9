@@ -10,15 +10,10 @@ from copy import copy
 from pathlib import Path
 from urllib.parse import urlparse
 
-from typing import Optional
-
 import cv2
 import numpy as np
-import pandas as pd
-import requests
 import torch
 import torch.nn as nn
-from IPython.display import display
 from PIL import Image
 from torch.cuda import amp
 
@@ -27,7 +22,6 @@ from utils.dataloaders import exif_transpose, letterbox
 from utils.general import (LOGGER, ROOT, Profile, check_requirements, check_suffix, check_version, colorstr,
                            increment_path, is_notebook, make_divisible, non_max_suppression, scale_boxes,
                            xywh2xyxy, xyxy2xywh, yaml_load)
-from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import copy_attr, smart_inference_mode
 
 
@@ -413,7 +407,7 @@ class SPP(nn.Module):
             warnings.simplefilter('ignore')  # suppress torch 1.9.0 max_pool2d() warning
             return self.cv2(torch.cat([x] + [m(x) for m in self.m], 1))
 
-        
+
 class ASPP(torch.nn.Module):
 
     def __init__(self, in_channels, out_channels):
@@ -493,8 +487,8 @@ class SPPF(nn.Module):
 
 import torch.nn.functional as F
 from torch.nn.modules.utils import _pair
-    
-    
+
+
 class ReOrg(nn.Module):
     # yolo
     def __init__(self):
@@ -549,17 +543,17 @@ class Shortcut(nn.Module):
 
     def forward(self, x):
         return x[0]+x[1]
-    
-    
+
+
 class Silence(nn.Module):
     def __init__(self):
         super(Silence, self).__init__()
-    def forward(self, x):    
+    def forward(self, x):
         return x
 
 
-##### GELAN #####        
-        
+##### GELAN #####
+
 class SPPELAN(nn.Module):
     # spp-elan
     def __init__(self, c1, c2, c3):  # ch_in, ch_out, number, shortcut, groups, expansion
@@ -575,8 +569,8 @@ class SPPELAN(nn.Module):
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3, self.cv4])
         return self.cv5(torch.cat(y, 1))
-        
-        
+
+
 class RepNCSPELAN4(nn.Module):
     # csp-elan
     def __init__(self, c1, c2, c3, c4, c5=1):  # ch_in, ch_out, number, shortcut, groups, expansion
@@ -607,7 +601,7 @@ class ImplicitA(nn.Module):
         super(ImplicitA, self).__init__()
         self.channel = channel
         self.implicit = nn.Parameter(torch.zeros(1, channel, 1, 1))
-        nn.init.normal_(self.implicit, std=.02)        
+        nn.init.normal_(self.implicit, std=.02)
 
     def forward(self, x):
         return self.implicit + x
@@ -618,7 +612,7 @@ class ImplicitM(nn.Module):
         super(ImplicitM, self).__init__()
         self.channel = channel
         self.implicit = nn.Parameter(torch.ones(1, channel, 1, 1))
-        nn.init.normal_(self.implicit, mean=1., std=.02)        
+        nn.init.normal_(self.implicit, mean=1., std=.02)
 
     def forward(self, x):
         return self.implicit * x
@@ -1021,6 +1015,7 @@ class AutoShape(nn.Module):
             for i, im in enumerate(ims):
                 f = f'image{i}'  # filename
                 if isinstance(im, (str, Path)):  # filename or uri
+                    import requests
                     im, f = Image.open(requests.get(im, stream=True).raw if str(im).startswith('http') else im), im
                     im = np.asarray(exif_transpose(im))
                 elif isinstance(im, Image.Image):  # PIL Image
@@ -1088,6 +1083,7 @@ class Detections:
                     s += f"{n} {self.names[int(c)]}{'s' * (n > 1)}, "  # add to string
                 s = s.rstrip(', ')
                 if show or save or render or crop:
+                    from utils.plots import Annotator, colors, save_one_box
                     annotator = Annotator(im, example=str(self.names))
                     for *box, conf, cls in reversed(pred):  # xyxy, confidence, class
                         label = f'{self.names[int(cls)]} {conf:.2f}'
@@ -1107,6 +1103,7 @@ class Detections:
 
             im = Image.fromarray(im.astype(np.uint8)) if isinstance(im, np.ndarray) else im  # from np
             if show:
+                from IPython.display import display
                 display(im) if is_notebook() else im.show(self.files[i])
             if save:
                 f = self.files[i]
@@ -1140,6 +1137,7 @@ class Detections:
         return self.ims
 
     def pandas(self):
+        import pandas as pd
         # return detections as pandas DataFrames, i.e. print(results.pandas().xyxy[0])
         new = copy(self)  # return copy
         ca = 'xmin', 'ymin', 'xmax', 'ymax', 'confidence', 'class', 'name'  # xyxy columns
@@ -1187,7 +1185,7 @@ class Proto(nn.Module):
 class UConv(nn.Module):
     def __init__(self, c1, c_=256, c2=256):  # ch_in, number of protos, number of masks
         super().__init__()
-        
+
         self.cv1 = Conv(c1, c_, k=3)
         self.cv2 = nn.Conv2d(c_, c2, 1, 1)
         self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
